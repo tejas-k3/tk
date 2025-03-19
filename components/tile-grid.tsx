@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react"
 import Tile from "./tile"
 import GapFiller from "./gap-filler"
+import NavBar from "./navbar"
+import Resume from "./resume"
 import type { PortfolioItem } from "@/lib/types"
 import { useWindowSize } from "@/hooks/use-window-size"
 
@@ -11,9 +13,16 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
   const [tiles, setTiles] = useState<any[]>([])
   const [gaps, setGaps] = useState<any[]>([])
   const { width, height } = useWindowSize()
+  
+  // States for animation and resume mode
+  const [isResumeMode, setIsResumeMode] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [animatedTiles, setAnimatedTiles] = useState<any[]>([])
+  const animationRef = useRef<number | null>(null)
 
+  // Normal tile layout algorithm
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current || isAnimating) return
 
     // Reset tiles and gaps on each resize/refresh
     setTiles([])
@@ -154,17 +163,288 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
 
     setTiles(placedTiles)
     setGaps(foundGaps)
-  }, [data, width, height])
+  }, [data, width, height, isAnimating])
+
+  // Generate resume positions for tiles
+  const generateResumePositions = () => {
+    if (!containerRef.current) return []
+    
+    const containerWidth = containerRef.current.clientWidth
+    const containerHeight = window.innerHeight
+    const resumeWidth = Math.min(containerWidth * 0.8, 1024) // Max width of 1024px
+    const resumeLeft = (containerWidth - resumeWidth) / 2
+    
+    // Group tiles into sections
+    const sections = [
+      { title: "Header", tiles: data.slice(0, 3), height: 120 }, // Name, Current job, Passion
+      { title: "Skills", tiles: data.slice(3, 7), height: 180 }, // Skills, Experience, Education, Interests
+      { title: "Experience", tiles: data.slice(7, 11), height: 200 }, // Projects, Contact, Hobbies, Location
+      { title: "Details", tiles: data.slice(11, 15), height: 180 }, // Languages, Frameworks, Databases, Cloud
+      { title: "More", tiles: data.slice(15), height: 160 } // DevOps, Design, Testing, Mobile, Open Source
+    ]
+    
+    let currentY = 50 // Starting Y position
+    const positions: any[] = []
+    
+    sections.forEach(section => {
+      const tileHeight = section.height
+      const tileWidth = resumeWidth / section.tiles.length
+      
+      section.tiles.forEach((tile, index) => {
+        positions.push({
+          id: tile.id,
+          x: resumeLeft + (index * tileWidth),
+          y: currentY,
+          width: tileWidth,
+          height: tileHeight,
+          content: tile,
+          targetOpacity: 1,
+          section: section.title
+        })
+      })
+      
+      currentY += tileHeight + 20 // Add spacing between sections
+    })
+    
+    return positions
+  }
+  
+  // Toggle between portfolio and resume view with animation
+  const handleToggleResume = () => {
+    if (isAnimating) return
+    
+    setIsAnimating(true)
+    
+    if (isResumeMode) {
+      // Animate from resume back to portfolio
+      const resumePositions = animatedTiles.length > 0 ? animatedTiles : generateResumePositions()
+      const targetPositions = [...tiles]
+      
+      // Create animated tiles with start positions (resume) and target positions (portfolio)
+      const animatedTilesCopy = resumePositions.map(resumeTile => {
+        const targetTile = targetPositions.find(t => t.id === resumeTile.id) || 
+                          { x: Math.random() * width, y: Math.random() * height, width: 200, height: 150 }
+        
+        return {
+          ...resumeTile,
+          targetX: targetTile.x,
+          targetY: targetTile.y,
+          targetWidth: targetTile.width,
+          targetHeight: targetTile.height,
+          animProgress: 0
+        }
+      })
+      
+      setAnimatedTiles(animatedTilesCopy)
+      
+      // Start animation
+      animateToPortfolio(animatedTilesCopy)
+    } else {
+      // Animate from portfolio to resume
+      const resumePositions = generateResumePositions()
+      
+      // Create animated tiles with start positions (portfolio) and target positions (resume)
+      const animatedTilesCopy = tiles.map(tile => {
+        const targetTile = resumePositions.find(t => t.id === tile.id) || 
+                          { x: width/2, y: height/2, width: 0, height: 0, targetOpacity: 0 }
+        
+        return {
+          ...tile,
+          targetX: targetTile.x,
+          targetY: targetTile.y,
+          targetWidth: targetTile.width,
+          targetHeight: targetTile.height,
+          targetOpacity: targetTile.targetOpacity || 1,
+          section: targetTile.section,
+          animProgress: 0
+        }
+      })
+      
+      setAnimatedTiles(animatedTilesCopy)
+      
+      // Start animation
+      animateToResume(animatedTilesCopy)
+    }
+  }
+  
+  // Animation function for tiles moving to resume positions
+  const animateToResume = (initialTiles: any[]) => {
+    let animProgress = 0
+    const animDuration = 60 // Animation frames (60 = 1 second at 60fps)
+    let animTiles = [...initialTiles]
+    
+    const animate = () => {
+      animProgress += 1
+      
+      if (animProgress >= animDuration) {
+        // Animation complete
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current)
+          animationRef.current = null
+        }
+        setIsAnimating(false)
+        setIsResumeMode(true)
+        return
+      }
+      
+      // Easing function for smooth animation
+      const easeOutQuad = (t: number) => t * (2 - t)
+      const progress = easeOutQuad(animProgress / animDuration)
+      
+      // Update positions with easing
+      animTiles = animTiles.map(tile => {
+        const startX = tile.x
+        const startY = tile.y
+        const startWidth = tile.width
+        const startHeight = tile.height
+        
+        const x = startX + (tile.targetX - startX) * progress
+        const y = startY + (tile.targetY - startY) * progress
+        const width = startWidth + (tile.targetWidth - startWidth) * progress
+        const height = startHeight + (tile.targetHeight - startHeight) * progress
+        const opacity = 1 - (1 - (tile.targetOpacity || 1)) * progress
+        
+        // Add a slight delay based on section for cascade effect
+        const sectionDelay = {
+          "Header": 0,
+          "Skills": 0.1,
+          "Experience": 0.2,
+          "Details": 0.3,
+          "More": 0.4
+        }
+        const delay = sectionDelay[tile.section as keyof typeof sectionDelay] || 0
+        
+        // Apply delay to progress
+        const delayedProgress = Math.max(0, Math.min(1, (progress - delay) / (1 - delay)))
+        
+        // Only animate if we're past the delay
+        const finalX = progress <= delay ? startX : startX + (tile.targetX - startX) * delayedProgress
+        const finalY = progress <= delay ? startY : startY + (tile.targetY - startY) * delayedProgress
+        
+        return {
+          ...tile,
+          x: finalX,
+          y: finalY,
+          width,
+          height,
+          opacity,
+          animProgress: progress
+        }
+      })
+      
+      setAnimatedTiles([...animTiles])
+      animationRef.current = requestAnimationFrame(animate)
+    }
+    
+    animationRef.current = requestAnimationFrame(animate)
+  }
+  
+  // Animation function for tiles moving back to portfolio positions
+  const animateToPortfolio = (initialTiles: any[]) => {
+    let animProgress = 0
+    const animDuration = 60 // Animation frames (60 = 1 second at 60fps)
+    let animTiles = [...initialTiles]
+    
+    const animate = () => {
+      animProgress += 1
+      
+      if (animProgress >= animDuration) {
+        // Animation complete
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current)
+          animationRef.current = null
+        }
+        setIsAnimating(false)
+        setIsResumeMode(false)
+        return
+      }
+      
+      // Easing function for smooth animation
+      const easeOutQuad = (t: number) => t * (2 - t)
+      const progress = easeOutQuad(animProgress / animDuration)
+      
+      // Update positions with easing
+      animTiles = animTiles.map(tile => {
+        const startX = tile.x
+        const startY = tile.y
+        const startWidth = tile.width
+        const startHeight = tile.height
+        
+        const x = startX + (tile.targetX - startX) * progress
+        const y = startY + (tile.targetY - startY) * progress
+        const width = startWidth + (tile.targetWidth - startWidth) * progress
+        const height = startHeight + (tile.targetHeight - startHeight) * progress
+        
+        // Apply a slight random offset for a more dynamic feel
+        const randomOffsetX = Math.sin(animProgress * 0.1 + tile.id) * 5 * (1 - progress)
+        const randomOffsetY = Math.cos(animProgress * 0.1 + tile.id) * 5 * (1 - progress)
+        
+        return {
+          ...tile,
+          x: x + randomOffsetX,
+          y: y + randomOffsetY,
+          width,
+          height,
+          opacity: 1,
+          animProgress: progress
+        }
+      })
+      
+      setAnimatedTiles([...animTiles])
+      animationRef.current = requestAnimationFrame(animate)
+    }
+    
+    animationRef.current = requestAnimationFrame(animate)
+  }
+  
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full min-h-screen overflow-y-auto bg-gray-50">
-      {tiles.map((tile) => (
-        <Tile key={tile.id} x={tile.x} y={tile.y} width={tile.width} height={tile.height} content={tile.content} />
-      ))}
-  
-      {gaps.map((gap) => (
-        <GapFiller key={gap.id} x={gap.x} y={gap.y} width={gap.width} height={gap.height} />
-      ))}
-    </div>
+    <>
+      <NavBar onToggleResume={handleToggleResume} isResumeMode={isResumeMode} />
+      
+      <div ref={containerRef} className="relative w-full min-h-screen overflow-y-auto bg-gray-50 pt-16">
+        {!isAnimating && !isResumeMode && tiles.map((tile) => (
+          <Tile 
+            key={tile.id} 
+            x={tile.x} 
+            y={tile.y} 
+            width={tile.width} 
+            height={tile.height} 
+            content={tile.content} 
+          />
+        ))}
+        
+        {isAnimating && animatedTiles.map((tile) => (
+          <Tile 
+            key={tile.id} 
+            x={tile.x} 
+            y={tile.y} 
+            width={tile.width} 
+            height={tile.height} 
+            content={tile.content}
+            opacity={tile.opacity}
+            isAnimating={true}
+          />
+        ))}
+        
+        {!isAnimating && !isResumeMode && gaps.map((gap) => (
+          <GapFiller key={gap.id} x={gap.x} y={gap.y} width={gap.width} height={gap.height} />
+        ))}
+        
+        {!isAnimating && isResumeMode && (
+          <div className="pt-8">
+            <Resume />
+          </div>
+        )}
+      </div>
+    </>
   )
 }
