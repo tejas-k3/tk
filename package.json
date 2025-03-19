@@ -5,11 +5,9 @@
   "author": "Tejas Kothari",
   "scripts": {
   "dev": "next dev --turbopack",
-  "predeploy": "npm run build && next export && touch out/.nojekyll",
   "build": "next build",
   "start": "next start",
-  "lint": "next lint",
-  "deploy": "gh-pages -d out"
+  "lint": "next lint"
   },
   "dependencies": {
     "next": "15.2.3",
