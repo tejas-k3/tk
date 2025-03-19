@@ -21,3 +21,27 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Next.js build artifacts
+.next/
+
+# Output directory for static exports
+out/
+
+# Environment variables
+.env
+*.env
+
+# SWC cache (used by Next.js for performance)
+.swc/
+
+# System files
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Miscellaneous
+.idea/
+.vscode/
