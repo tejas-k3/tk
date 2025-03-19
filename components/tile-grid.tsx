@@ -3,19 +3,122 @@
 import { useEffect, useState, useRef } from "react"
 import Tile from "./tile"
 import GapFiller from "./gap-filler"
+import NavBar from "./nav-bar"
 import type { PortfolioItem } from "@/lib/types"
 import { useWindowSize } from "@/hooks/use-window-size"
+
+// LaTeX Resume Component
+const Resume = () => {
+  return (
+    <div className="bg-white p-8 mx-auto max-w-4xl shadow-lg rounded-lg">
+      <h1 className="text-3xl font-bold mb-6 text-center">Tejas Kothari</h1>
+      
+      <div className="mb-6 text-center">
+        <p>San Francisco, CA • contact@example.com • (123) 456-7890</p>
+        <p>linkedin.com/in/tejaskothari • github.com/tejaskothari</p>
+      </div>
+      
+      <section className="mb-6">
+        <h2 className="text-2xl font-bold mb-3 border-b pb-1">Summary</h2>
+        <p>Full Stack Developer with 5+ years of experience building web applications using React, Node.js, and TypeScript. Currently working at Observe.AI, developing innovative solutions for contact center intelligence.</p>
+      </section>
+      
+      <section className="mb-6">
+        <h2 className="text-2xl font-bold mb-3 border-b pb-1">Experience</h2>
+        
+        <div className="mb-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Observe.AI</h3>
+            <span>2021 - Present</span>
+          </div>
+          <p className="font-italic">Senior Full Stack Developer</p>
+          <ul className="list-disc ml-5 mt-2">
+            <li>Developed and maintained modern web applications using React and TypeScript</li>
+            <li>Implemented RESTful APIs using Node.js and Express</li>
+            <li>Improved application performance by 40% through code optimization</li>
+          </ul>
+        </div>
+        
+        <div className="mb-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Previous Company</h3>
+            <span>2018 - 2021</span>
+          </div>
+          <p className="font-italic">Full Stack Developer</p>
+          <ul className="list-disc ml-5 mt-2">
+            <li>Designed and developed responsive web applications</li>
+            <li>Collaborated with cross-functional teams to define product requirements</li>
+            <li>Implemented CI/CD pipeline using GitHub Actions</li>
+          </ul>
+        </div>
+      </section>
+      
+      <section className="mb-6">
+        <h2 className="text-2xl font-bold mb-3 border-b pb-1">Skills</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-bold">Languages</h3>
+            <p>JavaScript, TypeScript, Python, Go</p>
+          </div>
+          <div>
+            <h3 className="font-bold">Frameworks</h3>
+            <p>React, Next.js, Express, Node.js</p>
+          </div>
+          <div>
+            <h3 className="font-bold">Databases</h3>
+            <p>MongoDB, PostgreSQL, Redis</p>
+          </div>
+          <div>
+            <h3 className="font-bold">Cloud & DevOps</h3>
+            <p>AWS, Docker, Kubernetes, CI/CD</p>
+          </div>
+        </div>
+      </section>
+      
+      <section className="mb-6">
+        <h2 className="text-2xl font-bold mb-3 border-b pb-1">Education</h2>
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-bold">BS in Computer Science</h3>
+          <span>2014 - 2018</span>
+        </div>
+        <p>University of Technology</p>
+      </section>
+    </div>
+  )
+}
 
 export default function TileGrid({ data }: { data: PortfolioItem[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [tiles, setTiles] = useState<any[]>([])
   const [gaps, setGaps] = useState<any[]>([])
   const { width, height } = useWindowSize()
+  const [isResumeMode, setIsResumeMode] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const animationRef = useRef<number | null>(null)
+  const animatedTiles = useRef<any[]>([])
 
-  useEffect(() => {
+  // Toggle between portfolio and resume modes
+  const toggleResumeMode = () => {
+    if (isResumeMode) {
+      setIsResumeMode(false)
+      // Reset animation when switching back to portfolio
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
+      // Recreate the tile grid
+      createTileGrid()
+    } else {
+      // Start animation before showing resume
+      startFloatingAnimation()
+    }
+  }
+
+  // Create the initial tile grid
+  const createTileGrid = () => {
     if (!containerRef.current) return
 
-    // Reset tiles and gaps on each resize/refresh
+    // Reset tiles and gaps
     setTiles([])
     setGaps([])
 
@@ -64,6 +167,9 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
           width: finalWidth,
           height: rowHeight,
           content: tileContent,
+          // Add initial velocity for animation
+          vx: 0,
+          vy: 0,
         })
 
         currentX += finalWidth
@@ -77,6 +183,14 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
     }
 
     // Find gaps between tiles
+    findGaps(placedTiles, containerWidth, containerHeight)
+
+    // Set the tiles
+    setTiles(placedTiles)
+  }
+
+  // Find gaps between tiles
+  const findGaps = (placedTiles: any[], containerWidth: number, containerHeight: number) => {
     const foundGaps: any[] = []
 
     // More accurate gap detection
@@ -152,19 +266,140 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
       }
     }
 
-    setTiles(placedTiles)
     setGaps(foundGaps)
-  }, [data, width, height])
+  }
+
+  // Start the floating animation
+  const startFloatingAnimation = () => {
+    setIsAnimating(true)
+    animatedTiles.current = tiles.map(tile => ({
+      ...tile,
+      vx: (Math.random() - 0.5) * 2, // Random x velocity between -1 and 1
+      vy: (Math.random() - 0.5) * 2, // Random y velocity between -1 and 1
+    }))
+    
+    // Start animation loop
+    animateFloating()
+  }
+
+  // Animate the floating tiles
+  const animateFloating = () => {
+    if (!containerRef.current) return
+    
+    const containerWidth = containerRef.current.clientWidth
+    const containerHeight = containerRef.current.offsetHeight
+    
+    // Update positions
+    const updatedTiles = animatedTiles.current.map(tile => {
+      // Apply velocity
+      let newX = tile.x + tile.vx
+      let newY = tile.y + tile.vy
+      let newVx = tile.vx
+      let newVy = tile.vy
+      
+      // Bounce off edges
+      if (newX < 0 || newX + tile.width > containerWidth) {
+        newVx = -newVx * 0.8 // Dampen the velocity
+        newX = newX < 0 ? 0 : containerWidth - tile.width
+      }
+      
+      if (newY < 0 || newY + tile.height > containerHeight) {
+        newVy = -newVy * 0.8 // Dampen the velocity
+        newY = newY < 0 ? 0 : containerHeight - tile.height
+      }
+      
+      // Apply a small amount of randomness to create more natural movement
+      newVx += (Math.random() - 0.5) * 0.1
+      newVy += (Math.random() - 0.5) * 0.1
+      
+      // Add gravity effect - tiles slowly move toward the center
+      const centerX = containerWidth / 2
+      const centerY = containerHeight / 2
+      newVx += (centerX - (newX + tile.width / 2)) * 0.0001
+      newVy += (centerY - (newY + tile.height / 2)) * 0.0001
+      
+      // Dampen velocity over time
+      newVx *= 0.99
+      newVy *= 0.99
+      
+      return {
+        ...tile,
+        x: newX,
+        y: newY,
+        vx: newVx,
+        vy: newVy,
+      }
+    })
+    
+    animatedTiles.current = updatedTiles
+    setTiles([...updatedTiles])
+    
+    // Continue animation or transition to resume
+    const totalVelocity = updatedTiles.reduce((sum, tile) => sum + Math.abs(tile.vx) + Math.abs(tile.vy), 0)
+    
+    if (totalVelocity < 1) {
+      // Almost stopped - show resume
+      setIsAnimating(false)
+      setIsResumeMode(true)
+      cancelAnimationFrame(animationRef.current!)
+      animationRef.current = null
+    } else {
+      // Continue animation
+      animationRef.current = requestAnimationFrame(animateFloating)
+    }
+  }
+
+  // Initialize tiles on mount and when window size changes
+  useEffect(() => {
+    if (isResumeMode || isAnimating) return
+    createTileGrid()
+  }, [data, width, height, isResumeMode, isAnimating])
+
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full min-h-screen overflow-y-auto bg-gray-50">
-      {tiles.map((tile) => (
-        <Tile key={tile.id} x={tile.x} y={tile.y} width={tile.width} height={tile.height} content={tile.content} />
-      ))}
-  
-      {gaps.map((gap) => (
-        <GapFiller key={gap.id} x={gap.x} y={gap.y} width={gap.width} height={gap.height} />
-      ))}
-    </div>
+    <>
+      <NavBar onResumeToggle={toggleResumeMode} isResumeMode={isResumeMode} />
+      
+      <div className="pt-16"> {/* Add padding-top to account for navbar */}
+        {isResumeMode ? (
+          <div className="p-8 bg-gray-100 min-h-screen">
+            <Resume />
+          </div>
+        ) : (
+          <div 
+            ref={containerRef} 
+            className="relative w-full min-h-screen overflow-y-auto bg-gray-50"
+            style={{ transition: isAnimating ? 'none' : 'all 0.3s ease-in-out' }}
+          >
+            {tiles.map((tile) => (
+              <Tile 
+                key={tile.id} 
+                x={tile.x} 
+                y={tile.y} 
+                width={tile.width} 
+                height={tile.height} 
+                content={tile.content}
+                style={{ 
+                  transition: isAnimating ? 'none' : 'all 0.3s ease-in-out',
+                  animation: isAnimating ? 'pulse 2s infinite' : 'none'
+                }}
+              />
+            ))}
+
+            {!isAnimating && gaps.map((gap) => (
+              <GapFiller key={gap.id} x={gap.x} y={gap.y} width={gap.width} height={gap.height} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   )
 }

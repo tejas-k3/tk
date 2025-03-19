@@ -1,5 +1,5 @@
+// components/tile.tsx
 "use client"
-
 import { useEffect, useRef, useState } from "react"
 import type { PortfolioItem } from "@/lib/types"
 
@@ -9,60 +9,88 @@ interface TileProps {
   width: number
   height: number
   content: PortfolioItem
+  style?: React.CSSProperties
 }
 
-export default function Tile({ x, y, width, height, content }: TileProps) {
+// Define a set of pleasant, accessible color combinations
+const colorPalettes = [
+  { bg: "hsl(210, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(140, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(340, 60%, 85%)", text: "#000000" },
+  { bg: "hsl(40, 85%, 85%)", text: "#000000" },
+  { bg: "hsl(280, 60%, 80%)", text: "#000000" },
+  { bg: "hsl(170, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(320, 60%, 75%)", text: "#000000" },
+  { bg: "hsl(200, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(60, 80%, 85%)", text: "#000000" },
+  { bg: "hsl(100, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(180, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(240, 50%, 80%)", text: "#000000" },
+  { bg: "hsl(300, 50%, 75%)", text: "#ffffff" },
+  { bg: "hsl(30, 80%, 85%)", text: "#000000" },
+  { bg: "hsl(120, 60%, 75%)", text: "#000000" },
+  { bg: "hsl(220, 65%, 75%)", text: "#000000" },
+  { bg: "hsl(270, 50%, 70%)", text: "#ffffff" },
+  { bg: "hsl(330, 60%, 75%)", text: "#000000" },
+  { bg: "hsl(20, 70%, 85%)", text: "#000000" },
+  { bg: "hsl(80, 70%, 85%)", text: "#000000" },
+]
+
+// Create a store of used colors to avoid repetition
+const usedColorIndices = new Set()
+
+// Function to get a random color palette
+const getRandomColorPalette = (id: number) => {
+  // Reset used colors if we've used all of them
+  if (usedColorIndices.size >= colorPalettes.length) {
+    usedColorIndices.clear()
+  }
+  
+  // Try to get a random color that hasn't been used yet
+  let randomIndex
+  do {
+    randomIndex = Math.floor(Math.random() * colorPalettes.length)
+  } while (usedColorIndices.has(randomIndex))
+  
+  // Mark this color as used
+  usedColorIndices.add(randomIndex)
+  
+  return colorPalettes[randomIndex]
+}
+
+export default function Tile({ x, y, width, height, content, style = {} }: TileProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(24)
+  const [colorPalette, setColorPalette] = useState(() => getRandomColorPalette(content.id))
   
   // Dynamically adjust font size to fit content
   useEffect(() => {
     if (!textRef.current) return
-
     const fitText = () => {
       const textElement = textRef.current
       if (!textElement) return
-
       // Start with a larger base font size
       let currentSize = 24
       setFontSize(currentSize)
-
       // Check if content overflows and adjust
       while ((textElement.scrollHeight > height - 40 || textElement.scrollWidth > width - 40) && currentSize > 10) {
         currentSize -= 0.5
         setFontSize(currentSize)
       }
     }
-
     fitText()
   }, [width, height, content])
 
-  // Generate a consistent color based on the content id
-  const backgroundColor = content.color || `hsl(${(content.id * 37) % 360}, 70%, 85%)`
-  
-  // Calculate text color based on background brightness
-  const getContrastColor = (bgColor: string) => {
-    // Extract HSL values
-    const hslMatch = bgColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
-    if (!hslMatch) return "#000000"
-    
-    const lightness = parseInt(hslMatch[3])
-    
-    // Return black for lighter backgrounds, white for darker backgrounds
-    return lightness > 60 ? "#000000" : "#ffffff"
-  }
-  
-  const textColor = content.textColor || getContrastColor(backgroundColor)
-
   return (
     <div
-      className="absolute p-6 overflow-hidden rounded-lg shadow-md transition-all duration-300 hover:shadow-lg border border-gray-100"
+      className="absolute p-6 overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg border border-gray-100"
       style={{
         left: x,
         top: y,
         width,
         height,
-        backgroundColor,
+        backgroundColor: colorPalette.bg,
+        ...style
       }}
     >
       <div
@@ -70,7 +98,7 @@ export default function Tile({ x, y, width, height, content }: TileProps) {
         className="w-full h-full flex flex-col justify-center items-center text-center"
         style={{ 
           fontSize: `${fontSize}px`,
-          color: textColor,
+          color: colorPalette.text,
           fontWeight: 500 // Make text slightly bolder
         }}
       >
