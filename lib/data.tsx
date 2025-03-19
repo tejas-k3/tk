@@ -4,7 +4,7 @@ export const portfolioData: PortfolioItem[] = [
   {
     id: 1,
     title: "Tejas Kothari",
-    description: "Full Stack Developer",
+    description: "Backend Developer",
     color: "hsl(210, 70%, 85%)",
   },
   {
@@ -16,19 +16,19 @@ export const portfolioData: PortfolioItem[] = [
   {
     id: 3,
     title: "Passionate about",
-    description: "Software Development",
+    description: "Engineering, Learning, Travelling",
     color: "hsl(340, 70%, 85%)",
   },
   {
     id: 4,
     title: "Skills",
-    description: "React, Node.js, TypeScript",
+    description: "Backend Development, Platform Engineering, Distributed Systems",
     color: "hsl(40, 70%, 85%)",
   },
   {
     id: 5,
     title: "Experience",
-    description: "5+ years in web development",
+    description: "3+ years in fast-paced distributed systems development",
     color: "hsl(280, 70%, 85%)",
   },
   {
@@ -40,7 +40,7 @@ export const portfolioData: PortfolioItem[] = [
   {
     id: 7,
     title: "Interests",
-    description: "AI, Machine Learning, UI/UX",
+    description: "Learning, Travelling, Reading, Writing, Researching",
     color: "hsl(320, 70%, 85%)",
   },
   {
@@ -52,74 +52,74 @@ export const portfolioData: PortfolioItem[] = [
   {
     id: 9,
     title: "Contact",
-    description: "Get in touch!",
+    description: "Get in touch at Linkedin!",
     color: "hsl(60, 70%, 85%)",
   },
-  {
-    id: 10,
-    title: "Hobbies",
-    description: "Photography, Hiking, Reading",
-    color: "hsl(100, 70%, 85%)",
-  },
+  // {
+  //   id: 10,
+  //   title: "Hobbies",
+  //   description: "Photography, Hiking, Reading",
+  //   color: "hsl(100, 70%, 85%)",
+  // },
   {
     id: 11,
     title: "Location",
-    description: "San Francisco, CA",
+    description: "Bengaluru, KA",
     color: "hsl(180, 70%, 85%)",
   },
   {
     id: 12,
     title: "Languages",
-    description: "JavaScript, Python, Go",
+    description: "Python, Java, PromQL, LogQL",
     color: "hsl(240, 70%, 85%)",
   },
   {
     id: 13,
     title: "Frameworks",
-    description: "React, Next.js, Express",
+    description: "FastAPI, Sanic, Django, Springboot",
     color: "hsl(300, 70%, 85%)",
   },
   {
     id: 14,
     title: "Databases",
-    description: "MongoDB, PostgreSQL, Redis",
+    description: "PostgreSQL, Redis, MongoDB",
     color: "hsl(30, 70%, 85%)",
   },
   {
     id: 15,
     title: "Cloud",
-    description: "AWS, GCP, Azure",
+    description: "AWS",
     color: "hsl(120, 70%, 85%)",
   },
   {
     id: 16,
     title: "DevOps",
-    description: "Docker, Kubernetes, CI/CD",
+    description: "Docker, Kubernetes, ArgoCD",
     color: "hsl(220, 70%, 85%)",
   },
-  {
-    id: 17,
-    title: "Design",
-    description: "Figma, Adobe XD, Sketch",
-    color: "hsl(270, 70%, 85%)",
-  },
-  {
-    id: 18,
-    title: "Testing",
-    description: "Jest, Cypress, Playwright",
-    color: "hsl(330, 70%, 85%)",
-  },
-  {
-    id: 19,
-    title: "Mobile",
-    description: "React Native, Flutter",
-    color: "hsl(20, 70%, 85%)",
-  },
-  {
-    id: 20,
-    title: "Open Source",
-    description: "Contributor & Maintainer",
-    color: "hsl(80, 70%, 85%)",
-  },
+  // {
+  //   id: 17,
+  //   title: "Design",
+  //   description: "Figma, Adobe XD, Sketch",
+  //   color: "hsl(270, 70%, 85%)",
+  // },
+  // {
+  //   id: 18,
+  //   title: "Testing",
+  //   description: "Jest, Cypress, Playwright",
+  //   color: "hsl(330, 70%, 85%)",
+  // },
+  // {
+  //   id: 19,
+  //   title: "Mobile",
+  //   description: "React Native, Flutter",
+  //   color: "hsl(20, 70%, 85%)",
+  // },
+  // {
+  //   id: 20,
+  //   title: "Open Source",
+  //   description: "Contributor & Maintainer",
+  //   color: "hsl(80, 70%, 85%)",
+  // },
 ]
 
