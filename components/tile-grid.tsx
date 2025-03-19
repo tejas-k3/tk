@@ -157,15 +157,14 @@ export default function TileGrid({ data }: { data: PortfolioItem[] }) {
   }, [data, width, height])
 
   return (
-    <div ref={containerRef} className="relative w-full h-screen overflow-hidden bg-gray-50">
+    <div ref={containerRef} className="relative w-full min-h-screen overflow-y-auto bg-gray-50">
       {tiles.map((tile) => (
         <Tile key={tile.id} x={tile.x} y={tile.y} width={tile.width} height={tile.height} content={tile.content} />
       ))}
-
+  
       {gaps.map((gap) => (
         <GapFiller key={gap.id} x={gap.x} y={gap.y} width={gap.width} height={gap.height} />
       ))}
     </div>
   )
 }
-

@@ -14,7 +14,7 @@ interface TileProps {
 export default function Tile({ x, y, width, height, content }: TileProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(24)
-
+  
   // Dynamically adjust font size to fit content
   useEffect(() => {
     if (!textRef.current) return
@@ -39,6 +39,20 @@ export default function Tile({ x, y, width, height, content }: TileProps) {
 
   // Generate a consistent color based on the content id
   const backgroundColor = content.color || `hsl(${(content.id * 37) % 360}, 70%, 85%)`
+  
+  // Calculate text color based on background brightness
+  const getContrastColor = (bgColor: string) => {
+    // Extract HSL values
+    const hslMatch = bgColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+    if (!hslMatch) return "#000000"
+    
+    const lightness = parseInt(hslMatch[3])
+    
+    // Return black for lighter backgrounds, white for darker backgrounds
+    return lightness > 60 ? "#000000" : "#ffffff"
+  }
+  
+  const textColor = content.textColor || getContrastColor(backgroundColor)
 
   return (
     <div
@@ -54,12 +68,15 @@ export default function Tile({ x, y, width, height, content }: TileProps) {
       <div
         ref={textRef}
         className="w-full h-full flex flex-col justify-center items-center text-center"
-        style={{ fontSize: `${fontSize}px` }}
+        style={{ 
+          fontSize: `${fontSize}px`,
+          color: textColor,
+          fontWeight: 500 // Make text slightly bolder
+        }}
       >
         <h3 className="font-bold mb-2">{content.title}</h3>
-        <p className="opacity-80">{content.description}</p>
+        <p className="opacity-90">{content.description}</p>
       </div>
     </div>
   )
 }
-
